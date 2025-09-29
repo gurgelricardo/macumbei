@@ -27,9 +27,9 @@ SECRET_KEY = 'django-insecure-wq*r^pki8#u#p=2$vp&r5sqee&m!#-vmrm&9ph-f9ze*nsw%ni
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.1.6', '127.0.0.1', 'cacographic-bertha-thymy.ngrok-free.dev']
+ALLOWED_HOSTS = ['macumbei-web.onrender.com']
 
-CSRF_TRUSTED_ORIGINS = ['https://cacographic-bertha-thymy.ngrok-free.dev']
+CSRF_TRUSTED_ORIGINS = ['https://macumbei-web.onrender.com']
 
 # Application definition
 
