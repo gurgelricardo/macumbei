@@ -1,0 +1,12 @@
+name: 'macumbei'
+
+services:
+  web:
+    build: .
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - ./media:/app/media
+      - ./db.sqlite3:/app/db.sqlite3
+    ports:
+      - "8000:8000"
+    container_name: macumbei-app

@@ -1,0 +1,18 @@
+# Ambiente Virtual
+venv/
+
+# Arquivos de cache do Python
+__pycache__/
+*.pyc
+
+# Banco de dados de desenvolvimento
+db.sqlite3
+db.sqlite3-journal
+
+# Arquivos do Git
+.git
+.gitignore
+
+# Arquivos de IDE
+.idea/
+.vscode/

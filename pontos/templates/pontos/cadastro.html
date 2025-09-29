@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Ponto</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 2em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 2em;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"],
+        select,
+        textarea {
+            padding: 0.8em;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        textarea {
+            resize: vertical;
+        }
+        .recording-buttons {
+            display: flex;
+            gap: 1em;
+            margin-top: 0.5em;
+        }
+        .recording-buttons button {
+            flex-grow: 1;
+        }
+        button {
+            padding: 0.8em;
+            margin-top: 1em;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        #btnGravar {
+            background-color: #dc3545;
+        }
+        #btnGravar:hover {
+            background-color: #c82333;
+        }
+        #btnParar {
+            background-color: #6c757d;
+        }
+        #btnParar:hover {
+            background-color: #5a6268;
+        }
+        #btnParar:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        button[type="submit"] {
+            background-color: #007bff;
+            margin-top: 2em;
+        }
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        #btnResetar {
+            background-color: #ffc107;
+        }
+        #btnResetar:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        hr { display: none; }
+        #statusFinal { margin-top: 1em; font-weight: bold; text-align: center; }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1em;
+            }
+            .container {
+                padding: 1.5em;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cadastrar Novo Ponto de Umbanda</h1>
+        <form id="formPonto">
+            {% csrf_token %}
+            <label for="nome">Nome do Ponto:</label>
+            <input type="text" id="nome" name="nome" required>
+            <label for="funcao">Função:</label>
+            <select id="funcao" name="funcao">
+                {% for value, label in funcoes %}
+                    <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+            <label for="linha">Linha:</label>
+            <select id="linha" name="linha">
+                {% for value, label in linhas %}
+                    <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+            <label for="entidade">Entidade (opcional):</label>
+            <input type="text" id="entidade" name="entidade">
+            <label for="letra">Letra do Ponto:</label>
+            <textarea id="letra" name="letra" rows="8" required></textarea>
+            <label>Gravação do Áudio (Obrigatório)</label>
+            <div class="recording-buttons">
+                <button type="button" id="btnGravar">🔴 Gravar Áudio</button>
+                <button type="button" id="btnParar" disabled>⏹️ Parar</button>
+                <button type="button" id="btnResetar" disabled>🔄 Resetar</button>
+            </div>
+            <div id="statusAudio"></div>
+            <audio id="audioPlayer" controls style="width: 100%; margin-top: 1em;"></audio>
+            <button type="submit">Salvar Ponto Completo</button>
+        </form>
+        <div id="statusFinal"></div>
+    </div>
+<script>
+    const btnGravar = document.getElementById('btnGravar');
+    const btnParar = document.getElementById('btnParar');
+    const btnResetar = document.getElementById('btnResetar');
+    const statusAudio = document.getElementById('statusAudio');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const formPonto = document.getElementById('formPonto');
+    const statusFinal = document.getElementById('statusFinal');
+    
+    let mediaRecorder;
+    let chunks = [];
+    let audioBlob = null;
+    let fileExtension = 'webm'; // Começamos com o padrão
+
+    btnGravar.addEventListener('click', async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            // --- NOVA LÓGICA PARA ESCOLHER O FORMATO ---
+            const options = { mimeType: 'audio/mp4' };
+            if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                fileExtension = 'mp4';
+                mediaRecorder = new MediaRecorder(stream, options);
+            } else {
+                // Se MP4 não for suportado, usa o padrão WebM
+                fileExtension = 'webm';
+                mediaRecorder = new MediaRecorder(stream);
+                console.warn("Gravação em MP4 não suportada, usando WebM como fallback.");
+            }
+            // -----------------------------------------
+
+            mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+
+            mediaRecorder.onstop = () => {
+                audioBlob = new Blob(chunks, { type: `audio/${fileExtension}` });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                audioPlayer.src = audioUrl;
+                chunks = [];
+                statusAudio.innerText = "Áudio pronto para ser enviado.";
+                btnResetar.disabled = false;
+            };
+
+            mediaRecorder.start();
+            statusAudio.innerText = "Gravando...";
+            btnGravar.disabled = true;
+            btnParar.disabled = false;
+            btnResetar.disabled = true;
+        } catch (err) {
+            statusAudio.innerText = "Erro: não foi possível acessar o microfone.";
+            console.error("Erro no getUserMedia:", err);
+        }
+    });
+
+    btnParar.addEventListener('click', () => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+        }
+        btnGravar.disabled = false;
+        btnParar.disabled = true;
+    });
+
+    btnResetar.addEventListener('click', () => {
+        audioBlob = null;
+        chunks = [];
+        audioPlayer.src = '';
+        btnGravar.disabled = false;
+        btnParar.disabled = true;
+        btnResetar.disabled = true;
+        statusAudio.innerText = "Gravação resetada. Você pode gravar novamente.";
+    });
+
+    formPonto.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        if (!audioBlob) {
+            statusFinal.innerText = "Erro: É obrigatório gravar o áudio antes de salvar.";
+            statusFinal.style.color = 'red';
+            return;
+        }
+
+        const formData = new FormData(formPonto);
+        // --- USA A EXTENSÃO DE ARQUIVO CORRETA ---
+        formData.append('audio_blob', audioBlob, `gravacao.${fileExtension}`);
+        // -----------------------------------------
+
+        statusFinal.innerText = "Enviando dados...";
+        statusFinal.style.color = 'black';
+
+        fetch("{% url 'salvar_ponto' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'sucesso') {
+                statusFinal.innerText = data.mensagem;
+                statusFinal.style.color = 'green';
+                formPonto.reset();
+                audioPlayer.src = '';
+                audioBlob = null;
+                btnResetar.disabled = true;
+            } else {
+                statusFinal.innerText = `Erro: ${data.mensagem}`;
+                statusFinal.style.color = 'red';
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            statusFinal.innerText = 'Ocorreu um erro de comunicação com o servidor.';
+            statusFinal.style.color = 'red';
+        });
+    });
+</script>
+</body>
+</html>
