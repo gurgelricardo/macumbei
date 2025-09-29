@@ -1,155 +1,61 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastrar Ponto</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 2em;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container {
-            background-color: #ffffff;
-            padding: 2em;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 600px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-        label {
-            margin-top: 1em;
-            margin-bottom: 0.5em;
-            font-weight: bold;
-            color: #555;
-        }
-        input[type="text"],
-        select,
-        textarea {
-            padding: 0.8em;
-            font-size: 1em;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        textarea {
-            resize: vertical;
-        }
-        .recording-buttons {
-            display: flex;
-            gap: 1em;
-            margin-top: 0.5em;
-        }
-        .recording-buttons button {
-            flex-grow: 1;
-        }
-        button {
-            padding: 0.8em;
-            margin-top: 1em;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            border-radius: 4px;
-            color: white;
-            transition: background-color 0.2s;
-        }
-        #btnGravar {
-            background-color: #dc3545;
-        }
-        #btnGravar:hover {
-            background-color: #c82333;
-        }
-        #btnParar {
-            background-color: #6c757d;
-        }
-        #btnParar:hover {
-            background-color: #5a6268;
-        }
-        #btnParar:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        button[type="submit"] {
-            background-color: #007bff;
-            margin-top: 2em;
-        }
-        button[type="submit"]:hover {
-            background-color: #0056b3;
-        }
-        #btnResetar {
-            background-color: #ffc107;
-        }
-        #btnResetar:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        hr { display: none; }
-        #statusFinal { margin-top: 1em; font-weight: bold; text-align: center; }
+{% extends 'pontos/base.html' %}
 
-        @media (max-width: 768px) {
-            body {
-                padding: 1em;
-            }
-            .container {
-                padding: 1.5em;
-            }
-            h1 {
-                font-size: 1.8em;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Cadastrar Novo Ponto de Umbanda</h1>
-        <form id="formPonto">
-            {% csrf_token %}
-            <label for="nome">Nome do Ponto:</label>
-            <input type="text" id="nome" name="nome" required>
-            <label for="funcao">Função:</label>
-            <select id="funcao" name="funcao">
-                {% for value, label in funcoes %}
-                    <option value="{{ value }}">{{ label }}</option>
-                {% endfor %}
-            </select>
-            <label for="linha">Linha:</label>
-            <select id="linha" name="linha">
-                {% for value, label in linhas %}
-                    <option value="{{ value }}">{{ label }}</option>
-                {% endfor %}
-            </select>
-            <label for="entidade">Entidade (opcional):</label>
-            <input type="text" id="entidade" name="entidade">
-            <label for="letra">Letra do Ponto:</label>
-            <textarea id="letra" name="letra" rows="8" required></textarea>
-            <label>Gravação do Áudio (Obrigatório)</label>
-            <div class="recording-buttons">
-                <button type="button" id="btnGravar">🔴 Gravar Áudio</button>
-                <button type="button" id="btnParar" disabled>⏹️ Parar</button>
-                <button type="button" id="btnResetar" disabled>🔄 Resetar</button>
-            </div>
-            <div id="statusAudio"></div>
-            <audio id="audioPlayer" controls style="width: 100%; margin-top: 1em;"></audio>
-            <button type="submit">Salvar Ponto Completo</button>
-        </form>
-        <div id="statusFinal"></div>
-    </div>
+{% block title %}Cadastrar Ponto{% endblock %}
+
+{% block styles %}
+<style>
+    form { display: flex; flex-direction: column; }
+    label { margin-top: 1em; margin-bottom: 0.5em; font-weight: bold; color: #555; }
+    input[type="text"], select, textarea { padding: 0.8em; font-size: 1em; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
+    textarea { resize: vertical; }
+    .recording-buttons { display: flex; gap: 1em; margin-top: 0.5em; }
+    .recording-buttons button { flex-grow: 1; }
+    button { margin-top: 1em; }
+    #btnGravar { background-color: #dc3545; }
+    #btnParar { background-color: #6c757d; }
+    #btnParar:disabled { background-color: #ccc; cursor: not-allowed; }
+    button[type="submit"] { background-color: #007bff; margin-top: 2em; }
+    #btnResetar { background-color: #ffc107; }
+    #btnResetar:disabled { background-color: #ccc; cursor: not-allowed; }
+    #statusFinal { margin-top: 1em; font-weight: bold; text-align: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Cadastrar Novo Ponto de Umbanda</h1>
+    <form id="formPonto">
+        {% csrf_token %}
+        <label for="nome">Nome do Ponto:</label>
+        <input type="text" id="nome" name="nome" required>
+        <label for="funcao">Função:</label>
+        <select id="funcao" name="funcao">
+            {% for value, label in funcoes %}
+                <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+        <label for="linha">Linha:</label>
+        <select id="linha" name="linha">
+            {% for value, label in linhas %}
+                <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+        <label for="entidade">Entidade (opcional):</label>
+        <input type="text" id="entidade" name="entidade">
+        <label for="letra">Letra do Ponto:</label>
+        <textarea id="letra" name="letra" rows="8" required></textarea>
+        <label>Gravação do Áudio (Obrigatório)</label>
+        <div class="recording-buttons">
+            <button type="button" id="btnGravar" class="button">🔴 Gravar Áudio</button>
+            <button type="button" id="btnParar" class="button" disabled>⏹️ Parar</button>
+            <button type="button" id="btnResetar" class="button" disabled>🔄 Resetar</button>
+        </div>
+        <div id="statusAudio"></div>
+        <audio id="audioPlayer" controls style="width: 100%; margin-top: 1em;"></audio>
+        <button type="submit" class="button">Salvar Ponto Completo</button>
+    </form>
+    <div id="statusFinal"></div>
+</div>
 <script>
     const btnGravar = document.getElementById('btnGravar');
     const btnParar = document.getElementById('btnParar');
@@ -266,5 +172,4 @@
         });
     });
 </script>
-</body>
-</html>
+{% endblock %}
